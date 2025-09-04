@@ -1,0 +1,21 @@
+body {
+    display:flex;
+    background-color: rgb(253, 253, 253);
+    padding-top: 5%;
+}
+
+#main-conteiner {
+    width: 1000px;
+    height: 500px;
+    border: 1px solod #000000;
+    margin: 1px auto;
+    position: relative;
+    background-color: aliceblue;
+    
+}
+
+button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+}
