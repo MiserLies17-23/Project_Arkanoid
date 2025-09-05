@@ -242,15 +242,15 @@ $(document).ready(function() {
     }
 
     function gameOver(ball) {
-    // Получаем абсолютные координаты относительно документа
-    const ballBottom = ball.offset().top + ball.outerHeight();
-    const lineTop = $("#line").offset().top;
-    
-    if (ballBottom >= lineTop) {
-        conteiner.empty(); 
-        conteiner.append("Game Over!");
-        return true;
+        // Получаем абсолютные координаты относительно документа
+        const ballBottom = ball.offset().top + ball.outerHeight();
+        const lineTop = $("#line").offset().top;
+        
+        if (ballBottom >= lineTop) {
+            conteiner.empty(); 
+            conteiner.append("Game Over!");
+            return true;
+        }
+        return false;
     }
-    return false;
-}
 })
