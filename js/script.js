@@ -4,7 +4,9 @@ $(document).ready(function() {
     let conteiner = $("#main-conteiner");
     const conteinerWidth = conteiner.width();
     const ConteinerHeight = conteiner.height();
+    
     let count = 0;
+    let platformEnabled = true;
 
     $("#ready").on('click', function() {
         updateConteiner();
@@ -18,11 +20,8 @@ $(document).ready(function() {
         conteiner.empty();
         let line = $("<div>")
             .attr("id", "line")
+            .addClass("object line")
             .css({
-                "width": conteinerWidth+ "px",
-                "height": "5px",
-                "position": "relative",
-                "background": "red",
                 "top": ConteinerHeight - 5 + "px"
             })
         conteiner.append(line);
@@ -48,53 +47,45 @@ $(document).ready(function() {
     let updateCounter = () => $("#counter").text("Счёт: " + count) 
 
     function createShapes() {
-        const width = 40, height = 40;
+        let def = 3;
         for (let j = 0; j < 3; j++) {
-            for (let i = 0; i < 25; i++) {
-                let color = getColor();
-                let circle = $("<div>")
-                    .attr("id", "cir" + j + i)
-                    .addClass("circles")
+            for (let i = 0; i < 20; i++) {
+                let color = getColor(def);
+                let square = $("<div>")
+                    .attr("id", "sqr" + j + i)
+                    .addClass("object squares")
                     .css({
-                        "width": width + "px",
-                        "height": height + "px",
-                        "border-radius": "50%",
                         "background": color,
-                        "position": "absolute",
-                        "top": j*height + "px", 
-                        "left": i*width + "px",
+                        "top": j*40 + "px", 
+                        "left": i*50 + "px",
                     })
-                conteiner.append(circle);
+                    .data("defense", def)
+                conteiner.append(square);
             }
+            def--
         }
     }
     
-    function getColor() {
-        if(Math.random() < 0.9) {
-            console.log("purple");
-            return "purple";
-        } else {
+    function getColor(def) {
+        if(def == 3) {
             return "red";
+        } else if (def == 2) {
+            return "yellow";
+        } else {
+            return "green";
         }
     }
 
     function createPlatform() {
-        let width = 150, height = 10;
         let platform = $("<div>")
             .attr("id", "platform")
-            .css({
-                "width": width + "px",
-                "height": height + "px",
-                "background": "blue",
-                "position": "absolute",
-                "bottom": "10px", 
-                "left": "50%"
-            })
+            .addClass("object platform")
         conteiner.append(platform);
 
         let posX = parseInt($("#platform").css("left"));
-        
         $(document).keydown(function(e) {
+            if (!platformEnabled) return false;
+
             const step = 20;
             const platform = $("#platform");
             let posX = parseInt(platform.css("left")) || 0;
@@ -110,17 +101,12 @@ $(document).ready(function() {
     }
 
     function createBall() {
-        let width = 40, height = 40;
+
         let ball = $("<div>")
             .attr("id", "ball")
+            .addClass("object ball")
             .css({
-                "width": width + "px",
-                "height": height + "px",
-                "border-radius": "50%",
                 "background": "black",
-                "position": "absolute",
-                "bottom": "20px",
-                "left" : "550px"
             })
             .data("speed", {
                 x: -2,
@@ -143,6 +129,7 @@ $(document).ready(function() {
             // Если game over, останавливаем анимацию
             if (gameOver(ball)) {
                 gameActive = false;
+                getSound("blinking");
                 return;
             }
             
@@ -166,11 +153,13 @@ $(document).ready(function() {
         if (left <= 0 || left + ballDiametr >= conteinerWidth) {
             speed.x = -speed.x;
             left = Math.max(0, Math.min(left, conteinerWidth - ballDiametr));
+            getSound("rebound");
         }
 
         if (top <= 0 || top + ballDiametr >= ConteinerHeight) {
             speed.y = -speed.y;
             top = Math.max(0, Math.min(top, ConteinerHeight - ballDiametr));
+            getSound("rebound");
         }
 
         ball.css({
@@ -182,7 +171,6 @@ $(document).ready(function() {
     }
 
     function checkCollision(ball) {
-        let isCircle = false;
         const shape1 = {
             left : parseInt(ball.css("left")),
             top : parseInt(ball.css("top")),
@@ -199,23 +187,23 @@ $(document).ready(function() {
         };
 
         if (isCollising(shape1, plat)) {
-            handleCollision(ball, isCircle);
+            handleCollision(ball, false);
         }
 
-        $(".circles").each(function() {
-            isCircle = true;
-            let circle = ($(this));
+        $(".squares").each(function() {
+            let square = ($(this));
             const shape2 = {
-                left : parseInt(circle.css("left")) || 0,
-                top : parseInt(circle.css("top")) || 0,
-                right : parseInt(circle.css("left")) || 0 + circle.outerWidth(),
-                bottom : parseInt(circle.css("top")) || 0 + circle.outerHeight()
+                left : parseInt(square.css("left")),
+                top : parseInt(square.css("top")),
+                right : parseInt(square.css("left")) + square.outerWidth(),
+                bottom : parseInt(square.css("top")) + square.outerHeight()
             }
 
             if (isCollising(shape1, shape2)) {
-                handleCollision(ball, isCircle);
+                handleCollision(ball, true);
+                defensCheck(square);
                 updateCounter();
-                circle.remove();
+                return false;
             }
         }) 
     }
@@ -229,26 +217,67 @@ $(document).ready(function() {
         );
     }
 
-    function handleCollision(ball, isCircle) {
+    function handleCollision(ball, fl) {
+        
         let speed = ball.data("speed"); 
- 
         speed.y = -speed.y;
-        if (isCircle) {
-            count++;
-            speed.x = -speed.x;
-        }
 
+        if (!fl) {
+            getSound("rebound");
+        } else {
+            getSound("damage");
+        }
         ball.data("speed", speed);
     }
 
+    function defensCheck(square) {
+        let def = square.data("defense"); 
+        def--; 
+        if (def == 0) {
+            square.remove(); 
+            count++;
+        } else {
+            square.data("defense", def);
+            square.css({"background":getColor(def)});
+        }
+    }
+
+    function getSound(soundId) {
+        const sound = $("#" + soundId)[0];
+        sound.currentTime = 0;
+        sound.play();
+    }
+
     function gameOver(ball) {
-        // Получаем абсолютные координаты относительно документа
         const ballBottom = ball.offset().top + ball.outerHeight();
         const lineTop = $("#line").offset().top;
         
         if (ballBottom >= lineTop) {
+            // Останавливаем мяч
+            ball.addClass("ball-blink");
+            let speed = ball.data("speed");
+            speed.x = 0;
+            speed.y = 0;
+            ball.data("speed", speed);
+
+            platformEnabled = false;
+            // Запускаем таймер для завершения игры
+            setTimeout(() => {
+                ball.removeClass("ball-blink");
+                conteiner.empty(); 
+                $("#counter").remove();
+                getSound("gameOver");
+                conteiner.append("Game Over!<br>");
+                conteiner.append("Счёт: " + count); 
+            }, 3000);
+            
+            return true; 
+
+        } else if (count == 75) {
             conteiner.empty(); 
-            conteiner.append("Game Over!");
+            $("#counter").remove();
+            conteiner.append("Победа!<br>"); 
+            conteiner.append("Счёт: " + count); 
             return true;
         }
         return false;
