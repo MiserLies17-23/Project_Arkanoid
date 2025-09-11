@@ -8,6 +8,7 @@ $(document).ready(function() {
     let count = 0;
     let platformEnabled = true;
 
+    // Функции для класса Game
     $("#ready").on('click', function() {
         updateConteiner();
         createCounter();
@@ -46,6 +47,7 @@ $(document).ready(function() {
 
     let updateCounter = () => $("#counter").text("Счёт: " + count) 
 
+    // Функции для класса Square
     function createShapes() {
         let def = 3;
         for (let j = 0; j < 3; j++) {
@@ -76,6 +78,19 @@ $(document).ready(function() {
         }
     }
 
+    function defensCheck(square) {
+        let def = square.data("defense"); 
+        def--; 
+        if (def == 0) {
+            square.remove(); 
+            count++;
+        } else {
+            square.data("defense", def);
+            square.css({"background":getColor(def)});
+        }
+    }
+
+    // Функция для класса platform; 
     function createPlatform() {
         let platform = $("<div>")
             .attr("id", "platform")
@@ -100,6 +115,7 @@ $(document).ready(function() {
         });
     }
 
+    // Функция для класса Ball
     function createBall() {
 
         let ball = $("<div>")
@@ -230,17 +246,7 @@ $(document).ready(function() {
         ball.data("speed", speed);
     }
 
-    function defensCheck(square) {
-        let def = square.data("defense"); 
-        def--; 
-        if (def == 0) {
-            square.remove(); 
-            count++;
-        } else {
-            square.data("defense", def);
-            square.css({"background":getColor(def)});
-        }
-    }
+    // Функции для класса Game;
 
     function getSound(soundId) {
         const sound = $("#" + soundId)[0];
@@ -283,3 +289,4 @@ $(document).ready(function() {
         return false;
     }
 })
+
